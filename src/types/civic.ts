@@ -57,3 +57,29 @@ export interface MunicipalKPIs {
   averageResolutionHours: number;
   citizenSatisfactionScore: number; // out of 5.0
 }
+
+// Sprint 3 & 4 Types
+export interface DistrictAnalytics {
+  districtName: string;
+  totalComplaints: number;
+  resolvedComplaints: number;
+  slaCompliancePct: number;
+  averageResolutionHours: number;
+  citizenCsatRating: number;
+  allocatedEmergencyBudgetMillionIdr: number;
+}
+
+export interface Sp4nAuditReport {
+  reportDocumentNo: string;
+  reportingPeriod: string;
+  cityGovernmentName: string;
+  ombudsmanRegion: string;
+  totalAuditedTickets: number;
+  withinSlaCount: number;
+  breachedSlaCount: number;
+  ikmPublicSatisfactionIndex: number;
+  mayorSignatoryName: string;
+  headOfSmartCityName: string;
+  ombudsmanRepresentativeName: string;
+  verificationHash: string;
+}

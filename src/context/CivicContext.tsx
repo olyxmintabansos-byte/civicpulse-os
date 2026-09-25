@@ -5,7 +5,8 @@ import {
   CitizenReport,
   FieldDispatchTeam,
   MunicipalKPIs,
-  ComplaintCategory,
+  DistrictAnalytics,
+  Sp4nAuditReport,
 } from "@/types/civic";
 
 const INITIAL_REPORTS: CitizenReport[] = [
@@ -103,7 +104,6 @@ const INITIAL_REPORTS: CitizenReport[] = [
     remainingHours: 0,
     assignedTeamId: "TEAM-LH-02",
     resolvedAt: "25 Sep 2026, 09:40 WIB",
-    resolutionPhotoUrl: "/photos/pohon-selesai.jpg",
   },
 ];
 
@@ -153,15 +153,72 @@ const INITIAL_TEAMS: FieldDispatchTeam[] = [
   },
 ];
 
+const INITIAL_DISTRICTS: DistrictAnalytics[] = [
+  {
+    districtName: "Gambir (Jakarta Pusat)",
+    totalComplaints: 42,
+    resolvedComplaints: 40,
+    slaCompliancePct: 95.2,
+    averageResolutionHours: 3.4,
+    citizenCsatRating: 4.88,
+    allocatedEmergencyBudgetMillionIdr: 450,
+  },
+  {
+    districtName: "Cilandak (Jakarta Selatan)",
+    totalComplaints: 38,
+    resolvedComplaints: 35,
+    slaCompliancePct: 92.1,
+    averageResolutionHours: 4.2,
+    citizenCsatRating: 4.75,
+    allocatedEmergencyBudgetMillionIdr: 380,
+  },
+  {
+    districtName: "Jatinegara (Jakarta Timur)",
+    totalComplaints: 54,
+    resolvedComplaints: 49,
+    slaCompliancePct: 90.7,
+    averageResolutionHours: 5.1,
+    citizenCsatRating: 4.65,
+    allocatedEmergencyBudgetMillionIdr: 520,
+  },
+  {
+    districtName: "Kebayoran Baru (Jakarta Selatan)",
+    totalComplaints: 28,
+    resolvedComplaints: 28,
+    slaCompliancePct: 100.0,
+    averageResolutionHours: 2.8,
+    citizenCsatRating: 4.95,
+    allocatedEmergencyBudgetMillionIdr: 310,
+  },
+];
+
+const INITIAL_SP4N_REPORT: Sp4nAuditReport = {
+  reportDocumentNo: "LAKIP/SP4N-LAPOR/DKI/2026/09/104",
+  reportingPeriod: "TRIWULAN III TAHUN ANGGARAN 2026",
+  cityGovernmentName: "PEMERINTAH PROVINSI DKI JAKARTA",
+  ombudsmanRegion: "PERWAKILAN OMBUDSMAN RI WILAYAH JAKARTA RAYA",
+  totalAuditedTickets: 1620,
+  withinSlaCount: 1568,
+  breachedSlaCount: 52,
+  ikmPublicSatisfactionIndex: 88.4, // Kategori Sangat Baik
+  mayorSignatoryName: "Teguh Setyabudi, M.Si (Pj. Gubernur DKI Jakarta)",
+  headOfSmartCityName: "Yudhistira Nugraha, D.Phil (Kepala BLUD Smart City)",
+  ombudsmanRepresentativeName: "Dedy Irsan, SH, M.Hum (Kepala Ombudsman RI Jakarta)",
+  verificationHash: "SP4N-OMBUDSMAN-DKI-8841-A9C2",
+};
+
 interface CivicContextType {
   reports: CitizenReport[];
   teams: FieldDispatchTeam[];
+  districts: DistrictAnalytics[];
   kpis: MunicipalKPIs;
+  sp4nReport: Sp4nAuditReport;
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
   dispatchTeamToReport: (reportId: string, teamId: string) => void;
   resolveReport: (reportId: string) => void;
   escalateSeverity: (reportId: string) => void;
+  updateDistrictBudget: (districtName: string, newBudgetMillion: number) => void;
   resetToDefaults: () => void;
 }
 
@@ -170,6 +227,8 @@ const CivicContext = createContext<CivicContextType | undefined>(undefined);
 export const CivicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [reports, setReports] = useState<CitizenReport[]>(INITIAL_REPORTS);
   const [teams, setTeams] = useState<FieldDispatchTeam[]>(INITIAL_TEAMS);
+  const [districts, setDistricts] = useState<DistrictAnalytics[]>(INITIAL_DISTRICTS);
+  const [sp4nReport] = useState<Sp4nAuditReport>(INITIAL_SP4N_REPORT);
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
 
   // Sync from LocalStorage
@@ -177,8 +236,10 @@ export const CivicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const savedRep = localStorage.getItem("civic_reports_v1");
       const savedTeams = localStorage.getItem("civic_teams_v1");
+      const savedDist = localStorage.getItem("civic_districts_v1");
       if (savedRep) setReports(JSON.parse(savedRep));
       if (savedTeams) setTeams(JSON.parse(savedTeams));
+      if (savedDist) setDistricts(JSON.parse(savedDist));
     } catch {
       console.warn("Storage fallback");
     }
@@ -188,7 +249,8 @@ export const CivicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem("civic_reports_v1", JSON.stringify(reports));
     localStorage.setItem("civic_teams_v1", JSON.stringify(teams));
-  }, [reports, teams]);
+    localStorage.setItem("civic_districts_v1", JSON.stringify(districts));
+  }, [reports, teams, districts]);
 
   // Recalculate Municipal KPIs
   const pendingCount = reports.filter((r) => r.status === "TRIAGED_PENDING").length;
@@ -235,12 +297,18 @@ export const CivicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  const updateDistrictBudget = (districtName: string, newBudgetMillion: number) => {
+    setDistricts((prev) =>
+      prev.map((d) => (d.districtName === districtName ? { ...d, allocatedEmergencyBudgetMillionIdr: newBudgetMillion } : d))
+    );
+  };
+
   const resetToDefaults = () => {
     setReports(INITIAL_REPORTS);
     setTeams(INITIAL_TEAMS);
+    setDistricts(INITIAL_DISTRICTS);
     setActiveFilter("ALL");
-    localStorage.removeItem("civic_reports_v1");
-    localStorage.removeItem("civic_teams_v1");
+    localStorage.clear();
   };
 
   return (
@@ -248,12 +316,15 @@ export const CivicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         reports,
         teams,
+        districts,
         kpis,
+        sp4nReport,
         activeFilter,
         setActiveFilter,
         dispatchTeamToReport,
         resolveReport,
         escalateSeverity,
+        updateDistrictBudget,
         resetToDefaults,
       }}
     >

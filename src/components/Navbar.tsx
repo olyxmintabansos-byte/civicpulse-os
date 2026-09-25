@@ -11,7 +11,6 @@ import {
   BarChart3,
   FileText,
   PhoneCall,
-  CheckCircle2,
   RefreshCw,
   Building2,
 } from "lucide-react";
@@ -23,8 +22,8 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { label: "Incident Triage Map", href: "/", icon: MapPin },
     { label: "Field Dispatch Desk", href: "/dispatch/", icon: Truck },
-    { label: "Heatmap Analytics", href: "/analytics/", icon: BarChart3, badge: "Sprint 3" },
-    { label: "SP4N LAPOR! A4", href: "/surat/", icon: FileText, badge: "Sprint 3" },
+    { label: "Heatmap Analytics", href: "/analytics/", icon: BarChart3 },
+    { label: "SP4N LAPOR! A4", href: "/surat/", icon: FileText },
   ];
 
   return (
@@ -84,7 +83,7 @@ export const Navbar: React.FC = () => {
                 SMART CITY OS
               </span>
             </div>
-            <p className="text-[11px] font-mono text-slate-400">Citizen Complaint Triage &amp; Municipal SLA Resolution</p>
+            <p className="text-[11px] font-mono text-slate-400">Citizen Complaint Triage & Municipal SLA Resolution</p>
           </div>
         </div>
 
@@ -104,11 +103,6 @@ export const Navbar: React.FC = () => {
               >
                 <Icon className={`w-4 h-4 ${isActive ? "text-blue-400" : "text-slate-400"}`} />
                 <span>{item.label}</span>
-                {item.badge && (
-                  <span className="text-[9px] px-1.5 py-0.2 font-mono bg-slate-800 text-slate-400 rounded border border-slate-700">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
